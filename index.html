@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎰 Казино</title>
+    <title>🎰 Казино Премиум</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -17,7 +18,7 @@
             background: linear-gradient(135deg, #1a1a2e, #16213e);
             color: white;
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
         }
         
         .container {
@@ -27,7 +28,44 @@
         
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        
+        .game-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding: 5px;
+        }
+        
+        .game-tab {
+            flex: 1;
+            min-width: 100px;
+            padding: 15px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .game-tab.active {
+            background: #4CAF50;
+            transform: scale(1.05);
+        }
+        
+        .game-section {
+            display: none;
+        }
+        
+        .game-section.active {
+            display: block;
         }
         
         .balance {
@@ -44,6 +82,7 @@
             color: #4CAF50;
         }
         
+        /* Стили для слотов */
         .slot-machine {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 15px;
@@ -71,20 +110,120 @@
             border: 3px solid #ffd700;
         }
         
+        /* Стили для рулетки */
+        .roulette-wheel {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 20px;
+            position: relative;
+            border: 8px solid #8B4513;
+            border-radius: 50%;
+            background: #228B22;
+            overflow: hidden;
+        }
+        
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: gold;
+            border-radius: 50%;
+            z-index: 10;
+            border: 3px solid #ff6b00;
+        }
+        
+        .wheel-pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid red;
+            z-index: 11;
+        }
+        
+        .wheel-number {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 50%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 20px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* Стили для блэкджека */
+        .blackjack-table {
+            background: rgba(0, 100, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #8B4513;
+        }
+        
+        .hand {
+            min-height: 120px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .cards {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .card {
+            width: 60px;
+            height: 90px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            border: 2px solid #333;
+        }
+        
+        .card.red {
+            color: red;
+        }
+        
+        .card-back {
+            background: linear-gradient(45deg, #ff0000, #0000ff);
+            color: white;
+        }
+        
         .controls {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         
         .bet-controls {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
         
         button {
             flex: 1;
+            min-width: 80px;
             padding: 12px;
             border: none;
             border-radius: 8px;
@@ -109,6 +248,16 @@
             color: white;
         }
         
+        .hit-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .stand-btn {
+            background: #ff9800;
+            color: white;
+        }
+        
         .history {
             background: rgba(255, 255, 255, 0.1);
             padding: 15px;
@@ -130,6 +279,13 @@
             color: #f44336;
         }
         
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
         @keyframes spin {
             0% { transform: translateY(0); }
             100% { transform: translateY(-20px); }
@@ -138,13 +294,41 @@
         .spinning {
             animation: spin 0.1s infinite;
         }
+        
+        @keyframes wheel-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(3600deg); }
+        }
+        
+        .wheel-spinning {
+            animation: wheel-spin 5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+        }
+        
+        .achievements {
+            margin-top: 20px;
+        }
+        
+        .achievement {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid gold;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .achievement i {
+            color: gold;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎰 Казино</h1>
-            <p>Испытай удачу!</p>
+            <h1>🎰 Казино Премиум</h1>
+            <p>Выберите игру и испытайте удачу!</p>
         </div>
         
         <div class="balance">
@@ -152,23 +336,112 @@
             <div class="balance-amount" id="balance">1000</div>
         </div>
         
-        <div class="slot-machine">
-            <div class="slots">
-                <div class="slot" id="slot1">🍒</div>
-                <div class="slot" id="slot2">🍋</div>
-                <div class="slot" id="slot3">⭐</div>
+        <div class="game-selector">
+            <button class="game-tab active" onclick="switchGame('slots')">
+                <i class="fas fa-slot-machine"></i><br>Слоты
+            </button>
+            <button class="game-tab" onclick="switchGame('roulette')">
+                <i class="fas fa-dharmachakra"></i><br>Рулетка
+            </button>
+            <button class="game-tab" onclick="switchGame('blackjack')">
+                <i class="fas fa-club"></i><br>Блэкджек
+            </button>
+            <button class="game-tab" onclick="switchGame('achievements')">
+                <i class="fas fa-trophy"></i><br>Достижения
+            </button>
+        </div>
+        
+        <!-- Игра: Слоты -->
+        <div id="slots" class="game-section active">
+            <div class="slot-machine">
+                <div class="slots">
+                    <div class="slot" id="slot1">🍒</div>
+                    <div class="slot" id="slot2">🍋</div>
+                    <div class="slot" id="slot3">⭐</div>
+                </div>
+                
+                <div class="bet-controls">
+                    <button class="bet-btn" onclick="changeBet(10)">10</button>
+                    <button class="bet-btn" onclick="changeBet(50)">50</button>
+                    <button class="bet-btn" onclick="changeBet(100)">100</button>
+                </div>
+                
+                <div class="controls">
+                    <button class="spin-btn" onclick="spinSlots()" id="spinBtn">
+                        Крутить (ставка: <span id="currentBet">10</span>)
+                    </button>
+                </div>
             </div>
-            
-            <div class="bet-controls">
-                <button class="bet-btn" onclick="changeBet(10)">10</button>
-                <button class="bet-btn" onclick="changeBet(50)">50</button>
-                <button class="bet-btn" onclick="changeBet(100)">100</button>
+        </div>
+        
+        <!-- Игра: Рулетка -->
+        <div id="roulette" class="game-section">
+            <div class="slot-machine">
+                <div class="roulette-wheel" id="rouletteWheel">
+                    <div class="wheel-pointer"></div>
+                    <div class="wheel-center"></div>
+                </div>
+                
+                <div class="bet-controls">
+                    <button class="bet-btn" onclick="placeRouletteBet('red')">Красное</button>
+                    <button class="bet-btn" onclick="placeRouletteBet('black')">Черное</button>
+                    <button class="bet-btn" onclick="placeRouletteBet('green')">Зеленое</button>
+                </div>
+                
+                <div class="controls">
+                    <button class="spin-btn" onclick="spinRoulette()" id="rouletteSpinBtn">
+                        Крутить рулетку
+                    </button>
+                </div>
+                
+                <div id="rouletteResult"></div>
             </div>
-            
-            <div class="controls">
-                <button class="spin-btn" onclick="spin()" id="spinBtn">
-                    Крутить (ставка: <span id="currentBet">10</span>)
-                </button>
+        </div>
+        
+        <!-- Игра: Блэкджек -->
+        <div id="blackjack" class="game-section">
+            <div class="blackjack-table">
+                <div class="stats">
+                    <span>Дилер: <span id="dealerScore">0</span></span>
+                    <span>Игрок: <span id="playerScore">0</span></span>
+                </div>
+                
+                <div class="hand">
+                    <h3>Дилер:</h3>
+                    <div class="cards" id="dealerHand"></div>
+                </div>
+                
+                <div class="hand">
+                    <h3>Ваши карты:</h3>
+                    <div class="cards" id="playerHand"></div>
+                </div>
+                
+                <div class="bet-controls">
+                    <button class="bet-btn" onclick="changeBet(10)">10</button>
+                    <button class="bet-btn" onclick="changeBet(50)">50</button>
+                    <button class="bet-btn" onclick="changeBet(100)">100</button>
+                </div>
+                
+                <div class="controls" id="blackjackControls">
+                    <button class="spin-btn" onclick="startBlackjack()" id="startBlackjackBtn">
+                        Начать игру (ставка: <span id="blackjackBet">10</span>)
+                    </button>
+                </div>
+                
+                <div class="controls" id="gameControls" style="display: none;">
+                    <button class="hit-btn" onclick="playerHit()">Взять карту</button>
+                    <button class="stand-btn" onclick="playerStand()">Хватит</button>
+                </div>
+                
+                <div id="blackjackResult"></div>
+            </div>
+        </div>
+        
+        <!-- Достижения -->
+        <div id="achievements" class="game-section">
+            <div class="history">
+                <h3>Ваши достижения:</h3>
+                <div id="achievementsList"></div>
             </div>
         </div>
         
